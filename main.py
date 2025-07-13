@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routers import inserate, inserat
+from routers import inserate, inserat, health
 
 app = FastAPI(
     version="1.0.0"
@@ -12,8 +12,10 @@ async def root():
         "endpoints": [
             "/inserate",
             "/inserat/{id}"
+            "/health"
         ]
     }
 
 app.include_router(inserate.router)
 app.include_router(inserat.router) 
+app.include_router(health.router)
