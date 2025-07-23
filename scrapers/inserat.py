@@ -1,7 +1,9 @@
+import logging
 from fastapi import HTTPException
 from libs.websites import kleinanzeigen as lib
 import re
 
+logger = logging.getLogger(__name__)
 
 async def get_inserate_details(url: str, page):
     try:
@@ -10,7 +12,7 @@ async def get_inserate_details(url: str, page):
         try:
             await page.wait_for_selector("#viewad-cntr-num", state="visible", timeout=2500)
         except:
-            print("[WARNING] Views element did not appear within 5 seconds")
+            logging.warning("Views element did not appear within 5 seconds")
 
         ad_id = await lib.get_element_content(page, "#viewad-ad-id-box > ul > li:nth-child(2)",
                                               default="[ERROR] Ad ID not found")
@@ -82,5 +84,5 @@ async def get_inserate_details(url: str, page):
             "extra_info": extra_info,
         }
     except Exception as e:
-        print(f"[ERROR] {str(e)}")
+        logger.exception(f"Failed to extract inserate details from URL: {url}")
         raise HTTPException(status_code=500, detail=str(e))

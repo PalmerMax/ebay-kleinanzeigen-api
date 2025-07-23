@@ -1,9 +1,11 @@
+import logging
 from urllib.parse import urlencode
 
 from fastapi import HTTPException
 
 from utils.browser import PlaywrightManager
 
+logger = logging.getLogger(__name__)
 
 async def get_inserate_klaz(browser_manager: PlaywrightManager,
                             query: str = None,
@@ -42,20 +44,29 @@ async def get_inserate_klaz(browser_manager: PlaywrightManager,
     try:
         await page.goto(search_url.format(page=1), timeout=120000)
         results = []
+        previous_adids = set()
 
         for i in range(page_count):
             page_results = await get_ads(page)
+            current_adids = {ad["adid"] for ad in page_results}
+
+            if previous_adids and current_adids == previous_adids:
+                logger.info(f"Duplicate ad IDs detected on page {i + 1}. Stopping early.")
+                break
+
             results.extend(page_results)
+            previous_adids = current_adids
 
             if i < page_count - 1:
                 try:
                     await page.goto(search_url.format(page=i+2), timeout=120000)
                     await page.wait_for_load_state("networkidle")
                 except Exception as e:
-                    print(f"Failed to load page {i + 2}: {str(e)}")
+                    logger.warning(f"Failed to load page {i + 2}: {str(e)}")
                     break
         return results
     except Exception as e:
+        logger.exception("Unexpected error during inserate retrieval")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         await browser_manager.close_page(page)
@@ -85,4 +96,5 @@ async def get_ads(page):
                     results.append({"adid": data_adid, "url": data_href, "title": title_text, "price": price_text, "description": description_text})
         return results
     except Exception as e:
+        logger.exception("Failed to parse ads")
         raise HTTPException(status_code=500, detail=str(e))

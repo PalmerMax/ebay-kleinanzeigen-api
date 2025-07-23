@@ -1,6 +1,8 @@
+import logging
 from typing import Dict, List, Optional, Union, Any
 from playwright.async_api import Page, ElementHandle
 
+logger = logging.getLogger(__name__)
 
 async def get_element_content(page: Page, selector: str, default: Any = None) -> Optional[str]:
     element: Optional[ElementHandle] = await page.query_selector(selector)
@@ -73,7 +75,7 @@ async def get_seller_details(page: Page) -> Dict[str, Optional[str]]:
         result["badges"] = [badge.strip() for badge in badges if badge and badge.strip()]
 
     except Exception as e:
-        print(f"Error getting seller details: {str(e)}")
+        logger.error(f"Error getting seller details: {str(e)}")
 
     return result
 
@@ -96,7 +98,7 @@ async def get_details(page: Page) -> Dict[str, str]:
                 label: str = content.replace(value, "").strip()
                 details[label] = value.strip()
     except Exception as e:
-        print(f"Error getting details: {str(e)}")
+        logger.error(f"Error getting details: {str(e)}")
 
     return details
 
@@ -111,7 +113,7 @@ async def get_features(page: Page) -> List[str]:
             if feature_text and feature_text.strip():
                 features.append(feature_text.strip())
     except Exception as e:
-        print(f"Error getting features: {str(e)}")
+        logger.error(f"Error getting features: {str(e)}")
 
     return features
 
@@ -157,6 +159,6 @@ async def get_extra_info(page: Page) -> Dict[str, Optional[str]]:
         if views_element:
             result["views"] = await views_element.inner_text()
     except Exception as e:
-        print(f"Error getting extra info: {str(e)}")
+        logger.error(f"Error getting extra info: {str(e)}")
 
     return result
